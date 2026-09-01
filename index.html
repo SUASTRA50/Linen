@@ -3,216 +3,144 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linen Storage - Inventory Balance</title>
+<title>Linen Storage - Inventory</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>body{font-family:Inter,sans-serif;background:#f8f7f4}</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{font-family:Inter,sans-serif;background:#f8f7f4}button{cursor:pointer}</style>
 </head>
-<body class="min-h-screen">
+<body>
 <script>
-// >>> GANTI URL INI DENGAN URL WEB APP APPS SCRIPT KAMU <<<
-// Contoh: https://script.google.com/macros/s/AKfycby.../exec
-// Biarkan kosong "" jika belum ada, data tetap simpan lokal.
-const GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwSf9mhBWcbX_kIuBe8tYE_kmsXyDOFSPqJkv_XDTX3Yq8CgWp_EqUdng_ls8H-L1lv7A/exec";
+// >>> ISI URL WEB APP KAMU DI SINI, BIARKAN KOSONG JIKA MAU LOCAL SAJA <<<
+const GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwSf9mhBWcbX_kIuBe8tYE_kmsXyDOFSPqJkv_XDTX3Yq8CgWp_EqUdng_ls8H-L1lv7A/exec"; 
 </script>
 
-<header class="bg-slate-900 text-white sticky top-0 z-20">
-  <div class="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center text-slate-900 font-bold">L</div>
-      <div>
-        <h1 class="font-bold text-[15px] tracking-tight">LINEN STORAGE</h1>
-        <p class="text-[11px] text-white/60 -mt-1">Inventory Balance System</p>
+<div class="bg-slate-900 text-white">
+  <div class="max-w-6xl mx-auto px-5 py-4 flex justify-between items-center">
+    <b>LINEN STORAGE</b>
+    <span id="badge" class="text-[10px] bg-white/20 px-3 py-1 rounded-full">LOCAL</span>
+  </div>
+  <div class="max-w-6xl mx-auto px-5 pb-4 flex gap-2">
+    <button onclick="showTab('dash')" id="b-dash" class="bg-white text-black px-4 py-2 rounded-full text-sm font-semibold">Dashboard</button>
+    <button onclick="showTab('in')" id="b-in" class="bg-white/20 px-4 py-2 rounded-full text-sm">Items Masuk</button>
+    <button onclick="showTab('out')" id="b-out" class="bg-white/20 px-4 py-2 rounded-full text-sm">Items Keluar</button>
+    <button onclick="showTab('hist')" id="b-hist" class="bg-white/20 px-4 py-2 rounded-full text-sm">Riwayat</button>
+  </div>
+</div>
+
+<div class="max-w-6xl mx-auto p-5">
+  <!-- DASHBOARD -->
+  <div id="tab-dash">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+      <div class="bg-white p-4 rounded-xl border"><div class="text-[10px] text-gray-500">TOTAL BALANCE</div><div id="k-total" class="text-2xl font-bold">0</div></div>
+      <div class="bg-white p-4 rounded-xl border"><div class="text-[10px] text-gray-500">IN HARI INI</div><div id="k-in" class="text-2xl font-bold text-emerald-600">0</div></div>
+      <div class="bg-white p-4 rounded-xl border"><div class="text-[10px] text-gray-500">OUT HARI INI</div><div id="k-out" class="text-2xl font-bold text-amber-600">0</div></div>
+      <div class="bg-white p-4 rounded-xl border"><div class="text-[10px] text-gray-500">LOW STOCK</div><div id="k-low" class="text-2xl font-bold text-red-600">0</div></div>
+    </div>
+    <div class="bg-white p-4 rounded-xl border mb-5"><canvas id="c-out" height="100"></canvas></div>
+    <div class="bg-white p-4 rounded-xl border"><h3 class="font-bold mb-3 text-sm">Stok Aktual di Store</h3><div id="grid" class="grid grid-cols-2 md:grid-cols-5 gap-2"></div></div>
+  </div>
+
+  <!-- IN -->
+  <div id="tab-in" class="hidden max-w-xl">
+    <h2 class="text-xl font-bold">Items Masuk</h2><p class="text-sm text-gray-500 mb-4">Dari laundry / supplier</p>
+    <div class="bg-white p-6 rounded-xl border">
+      <label class="text-xs font-bold">INPUT BY *</label><input id="in-by" class="w-full mt-1 mb-3 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="Nama staff">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-bold">ITEMS IN *</label><select id="in-item" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm"></select></div>
+        <div><label class="text-xs font-bold">QTY *</label><input id="in-qty" type="number" min="1" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="25"></div>
       </div>
-    </div>
-    <div id="syncBadge" class="text-[11px] px-3 py-1 rounded-full bg-white/10">LOCAL MODE</div>
-  </div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 pb-3 flex gap-2 overflow-auto">
-    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Dashboard</button>
-    <button onclick="switchTab('in')" id="tab-in" class="tab-btn bg-white/10 text-white/70 px-4 py-2 rounded-full text-sm whitespace-nowrap">Items Masuk</button>
-    <button onclick="switchTab('out')" id="tab-out" class="tab-btn bg-white/10 text-white/70 px-4 py-2 rounded-full text-sm whitespace-nowrap">Items Keluar</button>
-    <button onclick="switchTab('history')" id="tab-history" class="tab-btn bg-white/10 text-white/70 px-4 py-2 rounded-full text-sm whitespace-nowrap">Riwayat</button>
-  </div>
-</header>
-
-<main class="max-w-7xl mx-auto px-4 md:px-6 py-6">
-  <div id="page-dashboard">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white rounded-2xl p-5 border border-black/5"><p class="text-[11px] uppercase tracking-widest text-slate-500">Total Balance</p><p id="kpi-total" class="text-3xl font-bold mt-2">0</p><p class="text-xs text-slate-400 mt-1">pcs di store</p></div>
-      <div class="bg-white rounded-2xl p-5 border border-black/5"><p class="text-[11px] uppercase tracking-widest text-slate-500">IN Hari Ini</p><p id="kpi-in" class="text-3xl font-bold mt-2 text-emerald-600">0</p><p class="text-xs text-slate-400 mt-1">items masuk</p></div>
-      <div class="bg-white rounded-2xl p-5 border border-black/5"><p class="text-[11px] uppercase tracking-widest text-slate-500">OUT Hari Ini</p><p id="kpi-out" class="text-3xl font-bold mt-2 text-amber-600">0</p><p class="text-xs text-slate-400 mt-1">items keluar</p></div>
-      <div class="bg-white rounded-2xl p-5 border border-black/5"><p class="text-[11px] uppercase tracking-widest text-slate-500">Low Stock</p><p id="kpi-low" class="text-3xl font-bold mt-2 text-red-600">0</p><p class="text-xs text-slate-400 mt-1">butuh restock</p></div>
-    </div>
-    <div class="grid md:grid-cols-3 gap-4 mb-6">
-      <div class="md:col-span-2 bg-white rounded-2xl p-5 border border-black/5"><h3 class="font-semibold text-sm mb-4">Pemakaian 7 Hari Terakhir (OUT)</h3><canvas id="chartOut" height="120"></canvas></div>
-      <div class="bg-white rounded-2xl p-5 border border-black/5"><h3 class="font-semibold text-sm mb-4">Distribusi Keluar per Item</h3><canvas id="chartDonut" height="120"></canvas></div>
-    </div>
-    <div class="bg-white rounded-2xl border border-black/5 p-5 mb-6">
-      <h3 class="font-semibold text-sm mb-4">Balance Per Item - Stok Aktual di Store</h3>
-      <div id="balanceGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"></div>
-    </div>
-    <div class="grid md:grid-cols-2 gap-4">
-      <div class="bg-white rounded-2xl border border-black/5 p-5"><h3 class="font-semibold text-sm mb-3 text-red-600">⚠ Low Stock Alert (&lt;20)</h3><div id="lowTable" class="text-sm"></div></div>
-      <div class="bg-white rounded-2xl border border-black/5 p-5"><h3 class="font-semibold text-sm mb-3">Transaksi Terbaru</h3><div id="recentTable" class="text-sm space-y-2"></div></div>
+      <button onclick="doIn()" class="w-full mt-5 bg-slate-900 text-white py-3 rounded-xl text-sm font-bold">Simpan Items IN</button>
     </div>
   </div>
 
-  <div id="page-in" class="hidden max-w-2xl">
-    <h2 class="text-2xl font-bold tracking-tight">Items Masuk</h2><p class="text-sm text-slate-500 mb-6">Catat linen masuk dari laundry / supplier</p>
-    <div class="bg-white rounded-2xl border border-black/5 p-6 md:p-8">
-      <div class="flex items-center gap-3 mb-6"><div class="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white">→</div><div><p class="font-semibold text-sm">Form Items IN</p><p class="text-xs text-slate-500">Masuk dari Laundry bersih / Supplier</p></div></div>
-      <form onsubmit="submitIn(event)" class="space-y-5">
-        <div><label class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Input By *</label><input id="in-by" required class="mt-2 w-full bg-[#f8f7f4] border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-slate-900" placeholder="Nama staff, contoh: Sari"></div>
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Items IN *</label><select id="in-item" class="mt-2 w-full bg-[#f8f7f4] border border-black/10 rounded-xl px-4 py-3 text-sm"></select></div>
-          <div><label class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Qty *</label><input id="in-qty" type="number" min="1" required class="mt-2 w-full bg-[#f8f7f4] border border-black/10 rounded-xl px-4 py-3 text-sm" placeholder="Contoh: 25"></div>
-        </div>
-        <button type="submit" class="w-full bg-slate-900 text-white rounded-xl py-3.5 text-sm font-semibold hover:bg-black">→ Simpan Items IN</button>
-      </form>
-    </div>
-  </div>
-
-  <div id="page-out" class="hidden max-w-2xl">
-    <h2 class="text-2xl font-bold tracking-tight">Items Keluar</h2><p class="text-sm text-slate-500 mb-6">Catat pemakaian ke room, laundry, atau discard</p>
-    <div class="bg-white rounded-2xl border border-black/5 p-6 md:p-8">
-      <div class="flex items-center gap-3 mb-6"><div class="w-9 h-9 bg-amber-500 rounded-xl flex items-center justify-center text-white">←</div><div><p class="font-semibold text-sm">Form Items OUT</p><p class="text-xs text-slate-500">Pemakaian harian, kirim laundry, discard</p></div></div>
-      <form onsubmit="submitOut(event)" class="space-y-5">
-        <div><label class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Input By *</label><input id="out-by" required class="mt-2 w-full bg-[#f8f7f4] border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-slate-900" placeholder="Nama staff, contoh: Budi"></div>
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Items OUT *</label><select id="out-item" class="mt-2 w-full bg-[#f8f7f4] border border-black/10 rounded-xl px-4 py-3 text-sm" onchange="updateOutStock()"></select><p id="out-stock" class="text-[11px] mt-2 text-slate-500 font-medium">Stok saat ini: 0 pcs</p></div>
-          <div><label class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Qty *</label><input id="out-qty" type="number" min="1" required class="mt-2 w-full bg-[#f8f7f4] border border-black/10 rounded-xl px-4 py-3 text-sm" placeholder="Contoh: 10"></div>
-        </div>
-        <button type="submit" class="w-full bg-amber-500 text-white rounded-xl py-3.5 text-sm font-semibold hover:bg-amber-600">← Catat Items OUT</button>
-      </form>
-    </div>
-  </div>
-
-  <div id="page-history" class="hidden">
-    <div class="flex flex-wrap justify-between gap-3 mb-4">
-      <h2 class="text-2xl font-bold tracking-tight">Riwayat Transaksi</h2>
-      <div class="flex gap-2">
-        <select id="filter-type" onchange="renderHistory()" class="bg-white border rounded-full px-4 py-2 text-sm"><option value="">Semua Tipe</option><option value="IN">IN</option><option value="OUT">OUT</option></select>
-        <select id="filter-item" onchange="renderHistory()" class="bg-white border rounded-full px-4 py-2 text-sm"><option value="">Semua Item</option></select>
-        <button onclick="exportCSV()" class="bg-slate-900 text-white rounded-full px-4 py-2 text-sm">Export CSV</button>
+  <!-- OUT -->
+  <div id="tab-out" class="hidden max-w-xl">
+    <h2 class="text-xl font-bold">Items Keluar</h2><p class="text-sm text-gray-500 mb-4">Ke room / laundry / discard</p>
+    <div class="bg-white p-6 rounded-xl border">
+      <label class="text-xs font-bold">INPUT BY *</label><input id="out-by" class="w-full mt-1 mb-3 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="Nama staff">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-bold">ITEMS OUT *</label><select id="out-item" onchange="updStock()" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm"></select><div id="stok-txt" class="text-[11px] mt-1 text-gray-500">Stok: 0 pcs</div></div>
+        <div><label class="text-xs font-bold">QTY *</label><input id="out-qty" type="number" min="1" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="10"></div>
       </div>
+      <button onclick="doOut()" class="w-full mt-5 bg-amber-500 text-white py-3 rounded-xl text-sm font-bold">Catat Items OUT</button>
     </div>
-    <div class="bg-white rounded-2xl border border-black/5 overflow-auto"><table class="w-full text-sm"><thead class="bg-[#f8f7f4] text-[11px] uppercase tracking-widest text-slate-500"><tr><th class="p-3 text-left">Waktu</th><th class="p-3 text-left">Type</th><th class="p-3 text-left">Item</th><th class="p-3 text-left">Qty</th><th class="p-3 text-left">Input By</th></tr></thead><tbody id="historyBody"></tbody></table></div>
   </div>
-</main>
 
-<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-sm px-5 py-3 rounded-full shadow-xl opacity-0 pointer-events-none transition-all"></div>
+  <!-- HIST -->
+  <div id="tab-hist" class="hidden">
+    <h2 class="text-xl font-bold mb-3">Riwayat</h2>
+    <div class="bg-white rounded-xl border overflow-auto"><table class="w-full text-sm"><thead class="bg-gray-100 text-[10px]"><tr><th class="p-2 text-left">Waktu</th><th class="p-2">Type</th><th class="p-2 text-left">Item</th><th class="p-2">Qty</th><th class="p-2 text-left">By</th></tr></thead><tbody id="hist-body"></tbody></table></div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-4 py-2 rounded-full opacity-0 transition">OK</div>
 
 <script>
 const ITEMS=["Bath towel","Hand Towel","Bath mat","Bathrobe","Face Towel","Oshibori","King Duvet Cover","Twin Duvet Cover","King Sheet","Twin Sheet","Pillow case","Pillow protector","Toiletries mat","Fruit napkin","Turndown mat"];
-let transactions = JSON.parse(localStorage.getItem('linen_transactions')||'[]');
-let chartOutInst, chartDonutInst;
+let data=JSON.parse(localStorage.getItem('linen_v3')||'[]');
+let chart=null;
 
 function init(){
-  const opts = ITEMS.map(i=>`<option value="${i}">${i}</option>`).join('');
-  document.getElementById('in-item').innerHTML=opts;
-  document.getElementById('out-item').innerHTML=opts;
-  document.getElementById('filter-item').innerHTML='<option value="">Semua Item</option>'+opts;
-  updateSyncBadge();
-  refreshAll();
-  updateOutStock();
+  const opt=ITEMS.map(i=>`<option value="${i}">${i}</option>`).join('');
+  document.getElementById('in-item').innerHTML=opt;
+  document.getElementById('out-item').innerHTML=opt;
+  refresh();
+  updStock();
+  const hasUrl = GOOGLE_SHEET_WEBAPP_URL && GOOGLE_SHEET_WEBAPP_URL.includes('https://');
+  document.getElementById('badge').innerText = hasUrl ? 'SYNC ON' : 'LOCAL';
+  document.getElementById('badge').className = hasUrl ? 'text-[10px] bg-emerald-500 px-3 py-1 rounded-full' : 'text-[10px] bg-white/20 px-3 py-1 rounded-full';
 }
-function getBalanceMap(){
-  const map={}; ITEMS.forEach(i=>map[i]=0);
-  transactions.forEach(t=>{ if(map[t.item]!==undefined){ map[t.item]+= t.type==='IN'? t.qty : -t.qty; } });
-  return map;
-}
-function switchTab(t){
-  ['dashboard','in','out','history'].forEach(k=>{
-    document.getElementById('page-'+k).classList.toggle('hidden',k!==t);
-    const btn=document.getElementById('tab-'+k);
-    if(k===t){ btn.className='tab-btn bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap'; }
-    else{ btn.className='tab-btn bg-white/10 text-white/70 px-4 py-2 rounded-full text-sm whitespace-nowrap'; }
+function balMap(){ const m={}; ITEMS.forEach(i=>m[i]=0); data.forEach(t=>{ m[t.item]+= t.type==='IN'?t.qty:-t.qty }); return m; }
+function showTab(id){
+  ['dash','in','out','hist'].forEach(k=>{
+    document.getElementById('tab-'+k).classList.toggle('hidden',k!==id);
+    document.getElementById('b-'+k).className = k===id ? 'bg-white text-black px-4 py-2 rounded-full text-sm font-semibold' : 'bg-white/20 px-4 py-2 rounded-full text-sm';
   });
-  if(t==='dashboard') refreshAll();
-  if(t==='history') renderHistory();
-  if(t==='out') updateOutStock();
+  if(id==='dash') drawChart();
+  if(id==='hist') renderHist();
+  if(id==='out') updStock();
 }
-function refreshAll(){
-  const bal=getBalanceMap();
-  const total=Object.values(bal).reduce((a,b)=>a+b,0);
+function refresh(){
+  const b=balMap();
+  document.getElementById('k-total').innerText=Object.values(b).reduce((a,c)=>a+c,0);
   const today=new Date().toDateString();
-  const inToday=transactions.filter(x=>x.type==='IN' && new Date(x.timestamp).toDateString()===today).reduce((a,b)=>a+b.qty,0);
-  const outToday=transactions.filter(x=>x.type==='OUT' && new Date(x.timestamp).toDateString()===today).reduce((a,b)=>a+b.qty,0);
-  const low=Object.entries(bal).filter(([,v])=>v<20).length;
-  document.getElementById('kpi-total').textContent=total;
-  document.getElementById('kpi-in').textContent=inToday;
-  document.getElementById('kpi-out').textContent=outToday;
-  document.getElementById('kpi-low').textContent=low;
-  const grid=document.getElementById('balanceGrid');
-  grid.innerHTML=Object.entries(bal).map(([item,qty])=>{
-    let color='bg-emerald-50 border-emerald-200 text-emerald-700';
-    if(qty<20) color='bg-red-50 border-red-200 text-red-700';
-    else if(qty<50) color='bg-amber-50 border-amber-200 text-amber-700';
-    return `<div class="rounded-xl border p-4 ${color}"><p class="text-[11px] uppercase tracking-wide opacity-70">${item}</p><p class="text-2xl font-bold mt-1">${qty}</p><p class="text-[11px]">pcs</p></div>`;
+  document.getElementById('k-in').innerText=data.filter(x=>x.type==='IN'&&new Date(x.timestamp).toDateString()===today).reduce((a,c)=>a+c.qty,0);
+  document.getElementById('k-out').innerText=data.filter(x=>x.type==='OUT'&&new Date(x.timestamp).toDateString()===today).reduce((a,c)=>a+c.qty,0);
+  document.getElementById('k-low').innerText=Object.values(b).filter(v=>v<20).length;
+  document.getElementById('grid').innerHTML=Object.entries(b).map(([k,v])=>{
+    let cls='bg-emerald-50 border-emerald-200'; if(v<20) cls='bg-red-50 border-red-200'; else if(v<50) cls='bg-amber-50 border-amber-200';
+    return `<div class="border rounded-lg p-3 ${cls}"><div class="text-[10px]">${k}</div><div class="font-bold text-lg">${v}</div><div class="text-[10px]">pcs</div></div>`;
   }).join('');
-  document.getElementById('lowTable').innerHTML= Object.entries(bal).filter(([,v])=>v<20).length ? Object.entries(bal).filter(([,v])=>v<20).map(([k,v])=>`<div class="flex justify-between py-2 border-b last:border-0"><span>${k}</span><span class="font-bold text-red-600">${v} pcs</span></div>`).join('') : '<p class="text-slate-400">Semua stok aman</p>';
-  document.getElementById('recentTable').innerHTML= [...transactions].reverse().slice(0,5).map(t=>`<div class="flex justify-between py-2 border-b last:border-0"><span class="truncate"><b class="${t.type==='IN'?'text-emerald-600':'text-amber-600'}">${t.type}</b> ${t.item} (${t.qty})</span><span class="text-[11px] text-slate-400">${new Date(t.timestamp).toLocaleTimeString()}</span></div>`).join('') || '<p class="text-slate-400">Belum ada transaksi</p>';
-  drawCharts();
+  drawChart();
 }
-function drawCharts(){
-  const days=[...Array(7)].map((_,i)=>{ const d=new Date(); d.setDate(d.getDate()- (6-i)); return d; });
-  const labels=days.map(d=>d.toLocaleDateString('id-ID',{weekday:'short'}));
-  const outPerDay=days.map(d=>{
-    const ds=d.toDateString();
-    return transactions.filter(t=>t.type==='OUT' && new Date(t.timestamp).toDateString()===ds).reduce((a,b)=>a+b.qty,0);
-  });
-  const ctx1=document.getElementById('chartOut');
-  if(chartOutInst) chartOutInst.destroy();
-  chartOutInst=new Chart(ctx1,{type:'bar',data:{labels,datasets:[{label:'OUT',data:outPerDay,backgroundColor:'#f59e0b',borderRadius:8}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-  const outByItem={}; ITEMS.forEach(i=>outByItem[i]=0);
-  transactions.filter(t=>t.type==='OUT').forEach(t=>{ outByItem[t.item]=(outByItem[t.item]||0)+t.qty; });
-  const donutData=Object.values(outByItem);
-  const ctx2=document.getElementById('chartDonut');
-  if(chartDonutInst) chartDonutInst.destroy();
-  chartDonutInst=new Chart(ctx2,{type:'doughnut',data:{labels:ITEMS, datasets:[{data:donutData, backgroundColor:['#0f172a','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#84cc16','#ec4899','#6366f1','#14b8a6','#f97316','#a855f7','#22c55e','#eab308','#64748b']}]},options:{plugins:{legend:{display:false}}}});
+function drawChart(){
+  const ctx=document.getElementById('c-out'); if(!ctx) return; if(chart) chart.destroy();
+  const days=[...Array(7)].map((_,i)=>{let d=new Date(); d.setDate(d.getDate()-(6-i)); return d;});
+  const vals=days.map(d=>data.filter(t=>t.type==='OUT'&&new Date(t.timestamp).toDateString()===d.toDateString()).reduce((a,c)=>a+c.qty,0));
+  chart=new Chart(ctx,{type:'bar',data:{labels:days.map(d=>d.toLocaleDateString('id-ID',{weekday:'short'})),datasets:[{data:vals,backgroundColor:'#f59e0b'}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
 }
-function submitIn(e){
-  e.preventDefault();
-  const data={id:Date.now().toString(),type:'IN',inputBy:document.getElementById('in-by').value.trim(),item:document.getElementById('in-item').value,qty:parseInt(document.getElementById('in-qty').value),timestamp:new Date().toISOString()};
-  if(!data.inputBy||!data.qty) return;
-  transactions.push(data); save(); syncToSheet(data);
-  e.target.reset(); toast('Items IN berhasil disimpan'); refreshAll();
+function doIn(){
+  const by=document.getElementById('in-by').value.trim(); const item=document.getElementById('in-item').value; const qty=parseInt(document.getElementById('in-qty').value);
+  if(!by||!qty){ toast('Lengkapi data'); return; }
+  const row={id:Date.now().toString(),type:'IN',inputBy:by,item,qty,timestamp:new Date().toISOString()};
+  data.push(row); localStorage.setItem('linen_v3',JSON.stringify(data)); sendSheet(row);
+  toast('IN disimpan'); document.getElementById('in-by').value=''; document.getElementById('in-qty').value=''; refresh();
 }
-function submitOut(e){
-  e.preventDefault();
-  const bal=getBalanceMap();
-  const item=document.getElementById('out-item').value;
-  const qty=parseInt(document.getElementById('out-qty').value);
-  if(bal[item]!==undefined && qty>bal[item]){ toast('Stok tidak cukup! Sisa '+bal[item]); return; }
-  const data={id:Date.now().toString(),type:'OUT',inputBy:document.getElementById('out-by').value.trim(),item,qty,timestamp:new Date().toISOString()};
-  transactions.push(data); save(); syncToSheet(data);
-  e.target.reset(); toast('Items OUT berhasil dicatat'); refreshAll(); updateOutStock();
+function doOut(){
+  const by=document.getElementById('out-by').value.trim(); const item=document.getElementById('out-item').value; const qty=parseInt(document.getElementById('out-qty').value);
+  if(!by||!qty){ toast('Lengkapi data'); return; }
+  const b=balMap(); if((b[item]||0)<qty){ toast('Stok kurang, sisa '+ (b[item]||0)); return; }
+  const row={id:Date.now().toString(),type:'OUT',inputBy:by,item,qty,timestamp:new Date().toISOString()};
+  data.push(row); localStorage.setItem('linen_v3',JSON.stringify(data)); sendSheet(row);
+  toast('OUT dicatat'); document.getElementById('out-by').value=''; document.getElementById('out-qty').value=''; refresh(); updStock();
 }
-function updateOutStock(){ const item=document.getElementById('out-item').value; const bal=getBalanceMap(); document.getElementById('out-stock').textContent='Stok saat ini: '+(bal[item]||0)+' pcs'; }
-function save(){ localStorage.setItem('linen_transactions',JSON.stringify(transactions)); }
-function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.opacity=1; setTimeout(()=>el.style.opacity=0,2500); }
-function renderHistory(){
-  const typeF=document.getElementById('filter-type').value;
-  const itemF=document.getElementById('filter-item').value;
-  let list=[...transactions].reverse();
-  if(typeF) list=list.filter(t=>t.type===typeF);
-  if(itemF) list=list.filter(t=>t.item===itemF);
-  document.getElementById('historyBody').innerHTML=list.map(t=>`<tr class="border-b last:border-0"><td class="p-3 text-xs">${new Date(t.timestamp).toLocaleString('id-ID')}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-[11px] ${t.type==='IN'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}">${t.type}</span></td><td class="p-3">${t.item}</td><td class="p-3 font-bold">${t.qty}</td><td class="p-3">${t.inputBy}</td></tr>`).join('') || '<tr><td colspan=5 class="p-6 text-center text-slate-400">Belum ada data</td></tr>';
-}
-function exportCSV(){
-  let csv='id,type,inputBy,item,qty,timestamp\n';
-  transactions.forEach(t=>{ csv+=`${t.id},${t.type},${t.inputBy},${t.item},${t.qty},${t.timestamp}\n`; });
-  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='linen_history.csv'; a.click();
-}
-function updateSyncBadge(){
-  const badge=document.getElementById('syncBadge');
-  if(GOOGLE_SHEET_WEBAPP_URL && !GOOGLE_SHEET_WEBAPP_URL.includes('xxxxxxxx')){ badge.textContent='AUTO SYNC ON'; badge.className='text-[11px] px-3 py-1 rounded-full bg-emerald-500 text-white'; }
-  else{ badge.textContent='LOCAL MODE'; badge.className='text-[11px] px-3 py-1 rounded-full bg-white/10 text-white/70'; }
-}
-async function syncToSheet(data){
-  if(!GOOGLE_SHEET_WEBAPP_URL || GOOGLE_SHEET_WEBAPP_URL.includes('xxxxxxxx')) return;
-  try{ await fetch(GOOGLE_SHEET_WEBAPP_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(data)}); }catch(err){ console.log('sync error',err); }
+function updStock(){ const b=balMap(); const it=document.getElementById('out-item').value; document.getElementById('stok-txt').innerText='Stok: '+(b[it]||0)+' pcs'; }
+function renderHist(){ document.getElementById('hist-body').innerHTML=[...data].reverse().map(t=>`<tr class="border-b"><td class="p-2 text-[11px]">${new Date(t.timestamp).toLocaleString('id-ID')}</td><td class="p-2 text-center"><span class="px-2 py-1 rounded-full text-[10px] ${t.type==='IN'?'bg-emerald-100':'bg-amber-100'}">${t.type}</span></td><td class="p-2">${t.item}</td><td class="p-2 text-center font-bold">${t.qty}</td><td class="p-2">${t.inputBy}</td></tr>`).join('') || '<tr><td colspan=5 class="p-4 text-center text-gray-400">Kosong</td></tr>'; }
+function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2000); }
+function sendSheet(row){
+  if(!GOOGLE_SHEET_WEBAPP_URL || !GOOGLE_SHEET_WEBAPP_URL.startsWith('https://')) return;
+  fetch(GOOGLE_SHEET_WEBAPP_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(row)}).then(()=>console.log('sent to sheet')).catch(e=>console.log('sheet err',e));
 }
 init();
 </script>
