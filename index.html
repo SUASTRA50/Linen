@@ -3,28 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linen Storage - Inventory</title>
+<title>Linen Storage - Multi Input</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>body{font-family:Inter,sans-serif;background:#f8f7f4}button{cursor:pointer}</style>
+<style>body{font-family:Inter,sans-serif;background:#f8f7f4}button{cursor:pointer} input[type=number]::-webkit-inner-spin-button{opacity:1}</style>
 </head>
 <body>
 <script>
-// >>> ISI URL WEB APP KAMU DI SINI, BIARKAN KOSONG JIKA MAU LOCAL SAJA <<<
-const GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwSf9mhBWcbX_kIuBe8tYE_kmsXyDOFSPqJkv_XDTX3Yq8CgWp_EqUdng_ls8H-L1lv7A/exec"; 
+// >>> ISI URL WEB APP KAMU DI SINI <<<
+const GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwSf9mhBWcbX_kIuBe8tYE_kmsXyDOFSPqJkv_XDTX3Yq8CgWp_EqUdng_ls8H-L1lv7A/exec";
 </script>
 
-<div class="bg-slate-900 text-white">
+<div class="bg-slate-900 text-white sticky top-0 z-20">
   <div class="max-w-6xl mx-auto px-5 py-4 flex justify-between items-center">
-    <b>LINEN STORAGE</b>
+    <b>LINEN STORAGE MULTI</b>
     <span id="badge" class="text-[10px] bg-white/20 px-3 py-1 rounded-full">LOCAL</span>
   </div>
-  <div class="max-w-6xl mx-auto px-5 pb-4 flex gap-2">
-    <button onclick="showTab('dash')" id="b-dash" class="bg-white text-black px-4 py-2 rounded-full text-sm font-semibold">Dashboard</button>
-    <button onclick="showTab('in')" id="b-in" class="bg-white/20 px-4 py-2 rounded-full text-sm">Items Masuk</button>
-    <button onclick="showTab('out')" id="b-out" class="bg-white/20 px-4 py-2 rounded-full text-sm">Items Keluar</button>
-    <button onclick="showTab('hist')" id="b-hist" class="bg-white/20 px-4 py-2 rounded-full text-sm">Riwayat</button>
+  <div class="max-w-6xl mx-auto px-5 pb-4 flex gap-2 overflow-x-auto">
+    <button onclick="showTab('dash')" id="b-dash" class="bg-white text-black px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Dashboard</button>
+    <button onclick="showTab('in')" id="b-in" class="bg-white/20 px-4 py-2 rounded-full text-sm whitespace-nowrap">Items Masuk (Multi)</button>
+    <button onclick="showTab('out')" id="b-out" class="bg-white/20 px-4 py-2 rounded-full text-sm whitespace-nowrap">Items Keluar (Multi)</button>
+    <button onclick="showTab('hist')" id="b-hist" class="bg-white/20 px-4 py-2 rounded-full text-sm whitespace-nowrap">Riwayat</button>
   </div>
 </div>
 
@@ -41,29 +41,33 @@ const GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwSf9mh
     <div class="bg-white p-4 rounded-xl border"><h3 class="font-bold mb-3 text-sm">Stok Aktual di Store</h3><div id="grid" class="grid grid-cols-2 md:grid-cols-5 gap-2"></div></div>
   </div>
 
-  <!-- IN -->
-  <div id="tab-in" class="hidden max-w-xl">
-    <h2 class="text-xl font-bold">Items Masuk</h2><p class="text-sm text-gray-500 mb-4">Dari laundry / supplier</p>
-    <div class="bg-white p-6 rounded-xl border">
-      <label class="text-xs font-bold">INPUT BY *</label><input id="in-by" class="w-full mt-1 mb-3 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="Nama staff">
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="text-xs font-bold">ITEMS IN *</label><select id="in-item" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm"></select></div>
-        <div><label class="text-xs font-bold">QTY *</label><input id="in-qty" type="number" min="1" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="25"></div>
+  <!-- IN MULTI -->
+  <div id="tab-in" class="hidden">
+    <h2 class="text-xl font-bold">Items Masuk - Multi Checklist</h2><p class="text-sm text-gray-500 mb-4">Centang & isi qty beberapa item sekaligus, 1x simpan</p>
+    <div class="bg-white p-5 rounded-xl border">
+      <div class="mb-4"><label class="text-xs font-bold">INPUT BY *</label><input id="in-by" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="Nama staff, contoh: Sari"></div>
+      <div class="flex justify-between items-center mb-3">
+        <p class="text-xs font-bold">PILIH ITEMS (checklist)</p>
+        <div class="flex gap-2"><button onclick="checkAll('in',true)" class="text-[11px] bg-slate-900 text-white px-3 py-1 rounded-full">Check All</button><button onclick="checkAll('in',false)" class="text-[11px] bg-gray-200 px-3 py-1 rounded-full">Uncheck</button></div>
       </div>
-      <button onclick="doIn()" class="w-full mt-5 bg-slate-900 text-white py-3 rounded-xl text-sm font-bold">Simpan Items IN</button>
+      <div id="in-list" class="grid md:grid-cols-2 gap-2 max-h-[50vh] overflow-auto pr-1"></div>
+      <button onclick="doInMulti()" class="w-full mt-5 bg-slate-900 text-white py-3.5 rounded-xl text-sm font-bold">→ Simpan Semua Items IN yang Dicentang</button>
+      <p id="in-summary" class="text-[11px] text-center mt-2 text-gray-400"></p>
     </div>
   </div>
 
-  <!-- OUT -->
-  <div id="tab-out" class="hidden max-w-xl">
-    <h2 class="text-xl font-bold">Items Keluar</h2><p class="text-sm text-gray-500 mb-4">Ke room / laundry / discard</p>
-    <div class="bg-white p-6 rounded-xl border">
-      <label class="text-xs font-bold">INPUT BY *</label><input id="out-by" class="w-full mt-1 mb-3 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="Nama staff">
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="text-xs font-bold">ITEMS OUT *</label><select id="out-item" onchange="updStock()" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm"></select><div id="stok-txt" class="text-[11px] mt-1 text-gray-500">Stok: 0 pcs</div></div>
-        <div><label class="text-xs font-bold">QTY *</label><input id="out-qty" type="number" min="1" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="10"></div>
+  <!-- OUT MULTI -->
+  <div id="tab-out" class="hidden">
+    <h2 class="text-xl font-bold">Items Keluar - Multi Checklist</h2><p class="text-sm text-gray-500 mb-4">Centang & isi qty beberapa item sekaligus</p>
+    <div class="bg-white p-5 rounded-xl border">
+      <div class="mb-4"><label class="text-xs font-bold">INPUT BY *</label><input id="out-by" class="w-full mt-1 bg-[#f8f7f4] border rounded-lg p-3 text-sm" placeholder="Nama staff, contoh: Budi"></div>
+      <div class="flex justify-between items-center mb-3">
+        <p class="text-xs font-bold">PILIH ITEMS (checklist)</p>
+        <div class="flex gap-2"><button onclick="checkAll('out',true)" class="text-[11px] bg-amber-500 text-white px-3 py-1 rounded-full">Check All</button><button onclick="checkAll('out',false)" class="text-[11px] bg-gray-200 px-3 py-1 rounded-full">Uncheck</button></div>
       </div>
-      <button onclick="doOut()" class="w-full mt-5 bg-amber-500 text-white py-3 rounded-xl text-sm font-bold">Catat Items OUT</button>
+      <div id="out-list" class="grid md:grid-cols-2 gap-2 max-h-[50vh] overflow-auto pr-1"></div>
+      <button onclick="doOutMulti()" class="w-full mt-5 bg-amber-500 text-white py-3.5 rounded-xl text-sm font-bold">← Catat Semua Items OUT yang Dicentang</button>
+      <p id="out-summary" class="text-[11px] text-center mt-2 text-gray-400"></p>
     </div>
   </div>
 
@@ -74,32 +78,65 @@ const GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwSf9mh
   </div>
 </div>
 
-<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-4 py-2 rounded-full opacity-0 transition">OK</div>
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-4 py-3 rounded-full opacity-0 transition z-50 max-w-[90vw] text-center">OK</div>
 
 <script>
 const ITEMS=["Bath towel","Hand Towel","Bath mat","Bathrobe","Face Towel","Oshibori","King Duvet Cover","Twin Duvet Cover","King Sheet","Twin Sheet","Pillow case","Pillow protector","Toiletries mat","Fruit napkin","Turndown mat"];
-let data=JSON.parse(localStorage.getItem('linen_v3')||'[]');
+let data=JSON.parse(localStorage.getItem('linen_multi')||'[]');
 let chart=null;
 
 function init(){
-  const opt=ITEMS.map(i=>`<option value="${i}">${i}</option>`).join('');
-  document.getElementById('in-item').innerHTML=opt;
-  document.getElementById('out-item').innerHTML=opt;
+  buildChecklist('in');
+  buildChecklist('out');
   refresh();
-  updStock();
-  const hasUrl = GOOGLE_SHEET_WEBAPP_URL && GOOGLE_SHEET_WEBAPP_URL.includes('https://');
+  const hasUrl = GOOGLE_SHEET_WEBAPP_URL && GOOGLE_SHEET_WEBAPP_URL.startsWith('https://');
   document.getElementById('badge').innerText = hasUrl ? 'SYNC ON' : 'LOCAL';
   document.getElementById('badge').className = hasUrl ? 'text-[10px] bg-emerald-500 px-3 py-1 rounded-full' : 'text-[10px] bg-white/20 px-3 py-1 rounded-full';
+}
+function buildChecklist(type){
+  const container=document.getElementById(type+'-list');
+  container.innerHTML=ITEMS.map((item,idx)=>{
+    return `<label class="flex items-center gap-3 border rounded-xl p-3 bg-[#f8f7f4] hover:bg-white cursor-pointer group">
+      <input type="checkbox" id="${type}-chk-${idx}" onchange="toggleQty('${type}',${idx})" class="w-5 h-5 rounded">
+      <div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">${item}</div><div id="${type}-stock-${idx}" class="text-[10px] text-gray-500">Stok: 0</div></div>
+      <input type="number" id="${type}-qty-${idx}" min="1" placeholder="Qty" disabled class="w-20 bg-white border rounded-lg p-2 text-sm text-center disabled:opacity-40 disabled:bg-gray-100" oninput="updateSummary('${type}')">
+    </label>`;
+  }).join('');
+}
+function toggleQty(type,idx){
+  const chk=document.getElementById(`${type}-chk-${idx}`);
+  const qty=document.getElementById(`${type}-qty-${idx}`);
+  qty.disabled=!chk.checked;
+  if(chk.checked){ qty.focus(); if(!qty.value) qty.value=1; } else { qty.value=''; }
+  updateSummary(type);
+}
+function checkAll(type,check){
+  ITEMS.forEach((_,idx)=>{
+    document.getElementById(`${type}-chk-${idx}`).checked=check;
+    toggleQty(type,idx);
+  });
+  if(check){ // set default 1 for all
+    ITEMS.forEach((_,idx)=>{ if(!document.getElementById(`${type}-qty-${idx}`).value) document.getElementById(`${type}-qty-${idx}`).value=1; });
+  }
+  updateSummary(type);
+}
+function updateSummary(type){
+  let totalItems=0; let totalQty=0;
+  ITEMS.forEach((_,idx)=>{
+    const chk=document.getElementById(`${type}-chk-${idx}`); const qty=parseInt(document.getElementById(`${type}-qty-${idx}`).value)||0;
+    if(chk.checked && qty>0){ totalItems++; totalQty+=qty; }
+  });
+  document.getElementById(`${type}-summary`).innerText = totalItems ? `${totalItems} item dipilih, total ${totalQty} pcs` : '';
 }
 function balMap(){ const m={}; ITEMS.forEach(i=>m[i]=0); data.forEach(t=>{ m[t.item]+= t.type==='IN'?t.qty:-t.qty }); return m; }
 function showTab(id){
   ['dash','in','out','hist'].forEach(k=>{
     document.getElementById('tab-'+k).classList.toggle('hidden',k!==id);
-    document.getElementById('b-'+k).className = k===id ? 'bg-white text-black px-4 py-2 rounded-full text-sm font-semibold' : 'bg-white/20 px-4 py-2 rounded-full text-sm';
+    document.getElementById('b-'+k).className = k===id ? 'bg-white text-black px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap' : 'bg-white/20 px-4 py-2 rounded-full text-sm whitespace-nowrap';
   });
-  if(id==='dash') drawChart();
+  if(id==='dash'){ refresh(); drawChart(); }
   if(id==='hist') renderHist();
-  if(id==='out') updStock();
+  if(id==='out' || id==='in') refreshStocks();
 }
 function refresh(){
   const b=balMap();
@@ -112,7 +149,23 @@ function refresh(){
     let cls='bg-emerald-50 border-emerald-200'; if(v<20) cls='bg-red-50 border-red-200'; else if(v<50) cls='bg-amber-50 border-amber-200';
     return `<div class="border rounded-lg p-3 ${cls}"><div class="text-[10px]">${k}</div><div class="font-bold text-lg">${v}</div><div class="text-[10px]">pcs</div></div>`;
   }).join('');
+  refreshStocks();
   drawChart();
+}
+function refreshStocks(){
+  const b=balMap();
+  ITEMS.forEach((item,idx)=>{
+    const elIn=document.getElementById(`in-stock-${idx}`); if(elIn) elIn.innerText=`Stok: ${b[item]||0} pcs`;
+    const elOut=document.getElementById(`out-stock-${idx}`); if(elOut) elOut.innerText=`Stok: ${b[item]||0} pcs | Sisa jika OUT: ${b[item]||0} pcs`;
+  });
+  // update sisa preview on out
+  ITEMS.forEach((_,idx)=>{
+    const chk=document.getElementById(`out-chk-${idx}`); const qtyEl=document.getElementById(`out-qty-${idx}`);
+    if(chk && qtyEl && chk.checked){
+      const qty=parseInt(qtyEl.value)||0; const item=ITEMS[idx]; const cur=b[item]||0;
+      document.getElementById(`out-stock-${idx}`).innerText=`Stok: ${cur} pcs | Sisa: ${cur - qty} pcs`;
+    }
+  });
 }
 function drawChart(){
   const ctx=document.getElementById('c-out'); if(!ctx) return; if(chart) chart.destroy();
@@ -120,29 +173,46 @@ function drawChart(){
   const vals=days.map(d=>data.filter(t=>t.type==='OUT'&&new Date(t.timestamp).toDateString()===d.toDateString()).reduce((a,c)=>a+c.qty,0));
   chart=new Chart(ctx,{type:'bar',data:{labels:days.map(d=>d.toLocaleDateString('id-ID',{weekday:'short'})),datasets:[{data:vals,backgroundColor:'#f59e0b'}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
 }
-function doIn(){
-  const by=document.getElementById('in-by').value.trim(); const item=document.getElementById('in-item').value; const qty=parseInt(document.getElementById('in-qty').value);
-  if(!by||!qty){ toast('Lengkapi data'); return; }
-  const row={id:Date.now().toString(),type:'IN',inputBy:by,item,qty,timestamp:new Date().toISOString()};
-  data.push(row); localStorage.setItem('linen_v3',JSON.stringify(data)); sendSheet(row);
-  toast('IN disimpan'); document.getElementById('in-by').value=''; document.getElementById('in-qty').value=''; refresh();
+function collectMulti(type){
+  const by=document.getElementById(`${type}-by`).value.trim();
+  if(!by){ toast('Isi Input By dulu'); return null; }
+  const rows=[];
+  ITEMS.forEach((item,idx)=>{
+    const chk=document.getElementById(`${type}-chk-${idx}`); const qty=parseInt(document.getElementById(`${type}-qty-${idx}`).value)||0;
+    if(chk.checked && qty>0){ rows.push({item,qty}); }
+  });
+  if(!rows.length){ toast('Centang minimal 1 item & isi qty'); return null; }
+  return {by,rows};
 }
-function doOut(){
-  const by=document.getElementById('out-by').value.trim(); const item=document.getElementById('out-item').value; const qty=parseInt(document.getElementById('out-qty').value);
-  if(!by||!qty){ toast('Lengkapi data'); return; }
-  const b=balMap(); if((b[item]||0)<qty){ toast('Stok kurang, sisa '+ (b[item]||0)); return; }
-  const row={id:Date.now().toString(),type:'OUT',inputBy:by,item,qty,timestamp:new Date().toISOString()};
-  data.push(row); localStorage.setItem('linen_v3',JSON.stringify(data)); sendSheet(row);
-  toast('OUT dicatat'); document.getElementById('out-by').value=''; document.getElementById('out-qty').value=''; refresh(); updStock();
+function doInMulti(){
+  const collected=collectMulti('in'); if(!collected) return;
+  const timestamp=new Date().toISOString();
+  const newRows=collected.rows.map(r=>({id:Date.now().toString()+'-'+Math.random().toString(36).substr(2,5),type:'IN',inputBy:collected.by,item:r.item,qty:r.qty,timestamp}));
+  data.push(...newRows); localStorage.setItem('linen_multi',JSON.stringify(data));
+  newRows.forEach(r=>sendSheet(r));
+  toast(`✅ Berhasil simpan ${newRows.length} item (${newRows.reduce((a,c)=>a+c.qty,0)} pcs)`);
+  checkAll('in',false); document.getElementById('in-by').value=''; refresh();
 }
-function updStock(){ const b=balMap(); const it=document.getElementById('out-item').value; document.getElementById('stok-txt').innerText='Stok: '+(b[it]||0)+' pcs'; }
+function doOutMulti(){
+  const collected=collectMulti('out'); if(!collected) return;
+  const b=balMap();
+  for(let r of collected.rows){ if((b[r.item]||0) < r.qty){ toast(`❌ Stok ${r.item} kurang! Sisa ${b[r.item]||0}, mau OUT ${r.qty}`); return; } }
+  const timestamp=new Date().toISOString();
+  const newRows=collected.rows.map(r=>({id:Date.now().toString()+'-'+Math.random().toString(36).substr(2,5),type:'OUT',inputBy:collected.by,item:r.item,qty:r.qty,timestamp}));
+  data.push(...newRows); localStorage.setItem('linen_multi',JSON.stringify(data));
+  newRows.forEach(r=>sendSheet(r));
+  toast(`✅ Berhasil catat OUT ${newRows.length} item (${newRows.reduce((a,c)=>a+c.qty,0)} pcs)`);
+  checkAll('out',false); document.getElementById('out-by').value=''; refresh();
+}
 function renderHist(){ document.getElementById('hist-body').innerHTML=[...data].reverse().map(t=>`<tr class="border-b"><td class="p-2 text-[11px]">${new Date(t.timestamp).toLocaleString('id-ID')}</td><td class="p-2 text-center"><span class="px-2 py-1 rounded-full text-[10px] ${t.type==='IN'?'bg-emerald-100':'bg-amber-100'}">${t.type}</span></td><td class="p-2">${t.item}</td><td class="p-2 text-center font-bold">${t.qty}</td><td class="p-2">${t.inputBy}</td></tr>`).join('') || '<tr><td colspan=5 class="p-4 text-center text-gray-400">Kosong</td></tr>'; }
-function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2000); }
+function toast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,3000); }
 function sendSheet(row){
   if(!GOOGLE_SHEET_WEBAPP_URL || !GOOGLE_SHEET_WEBAPP_URL.startsWith('https://')) return;
-  fetch(GOOGLE_SHEET_WEBAPP_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(row)}).then(()=>console.log('sent to sheet')).catch(e=>console.log('sheet err',e));
+  fetch(GOOGLE_SHEET_WEBAPP_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(row)}).catch(()=>{});
 }
+// update stock preview live
+setInterval(()=>{ if(!document.getElementById('tab-out').classList.contains('hidden')) refreshStocks(); },500);
 init();
 </script>
 </body>
-</html>
+</html
